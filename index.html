@@ -1,0 +1,571 @@
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>小小數學老師</title>
+    <style>
+        :root {
+            --primary-color: #3498db;
+            --secondary-color: #2ecc71;
+            --background-color: #ecf0f1;
+            --text-color: #34495e;
+            --shadow-color: rgba(0, 0, 0, 0.1);
+            --dark-primary-color: #2980b9;
+            --dark-secondary-color: #27ae60;
+            --dark-background-color: #2c3e50;
+            --dark-text-color: #ecf0f1;
+            --dark-shadow-color: rgba(255, 255, 255, 0.1);
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            padding: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .dark-mode {
+            background-color: var(--dark-background-color);
+            color: var(--dark-text-color);
+        }
+
+        h1, h2, h3 {
+            color: var(--primary-color);
+        }
+
+        .dark-mode h1, .dark-mode h2, .dark-mode h3 {
+            color: var(--dark-primary-color);
+        }
+
+        #quiz, #summary, #historyErrors {
+            display: none;
+        }
+
+        .container {
+            background-color: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 4px 6px var(--shadow-color);
+            margin-bottom: 20px;
+        }
+
+        .dark-mode .container {
+            background-color: #34495e;
+            box-shadow: 0 4px 10px #222;
+        }
+
+        button {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            font-size: 1em;
+            margin: 5px;
+        }
+
+        .dark-mode button {
+            background-color: var(--dark-primary-color);
+        }
+
+        button:hover {
+            background-color: #2980b9;
+        }
+
+        .dark-mode button:hover {
+            background-color: #1b6f8e;
+        }
+
+        input[type="number"], input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #bdc3c7;
+            border-radius: 5px;
+            font-size: 1em;
+        }
+
+        .dark-mode input[type="number"],
+        .dark-mode input[type="text"] {
+            background-color: #3b4c61;
+            border: 1px solid #7f8c8d;
+            color: var(--dark-text-color);
+        }
+
+        #historyErrorsList, #quizHistoryList {
+            max-height: 400px;
+            overflow-y: auto;
+            padding-left: 20px;
+        }
+
+        .statistics {
+            background-color: #f7f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 20px;
+        }
+
+        .dark-mode .statistics {
+            background-color: #2c3e50;
+        }
+
+        .setup-group {
+            margin-bottom: 15px;
+        }
+
+        .setup-group label {
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        #questionContainer {
+            font-size: 1.5em;
+            margin-bottom: 20px;
+        }
+
+        #nextButton {
+            background-color: var(--secondary-color);
+        }
+
+        .dark-mode #nextButton {
+            background-color: var(--dark-secondary-color);
+        }
+
+        #nextButton:hover {
+            background-color: #27ae60;
+        }
+
+        .dark-mode #nextButton:hover {
+            background-color: #1f8e49;
+        }
+
+        .error-item {
+            color: #e74c3c;
+        }
+
+        .statistic-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+        }
+
+        .quiz-history-item {
+            background-color: #f0f0f0;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .dark-mode .quiz-history-item {
+            background-color: #2b3d51;
+            color: var(--dark-text-color);
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+        }
+    </style>
+</head>
+<body>
+
+<h1>小小數學老師</h1>
+<div id="setup" class="container">
+    <div class="setup-group">
+        <label for="numAddends">選擇每題的數字個數：</label>
+        <input type="number" id="numAddends" min="2" max="5" value="2">
+    </div>
+    <div class="setup-group">
+        <label for="digitChoices">選擇數字的位數（用逗號分隔，例如：1,2）：</label>
+        <input type="text" id="digitChoices" value="1">
+    </div>
+    <div class="setup-group">
+        <label for="numQuestions">選擇題目數量：</label>
+        <input type="number" id="numQuestions" min="1" max="20" value="5">
+    </div>
+    <button onclick="startQuiz()">開始測驗</button>
+    <button onclick="showHistoryErrors()">顯示歷史錯誤</button>
+    <button onclick="toggleDarkMode()">切換模式</button>
+</div>
+
+<div id="quiz" class="container">
+    <h2>題目：</h2>
+    <div id="questionContainer"></div>
+    <button id="nextButton" onclick="nextQuestion()">下一題</button>
+</div>
+
+<div id="summary" class="container">
+    <h2>測驗結果：</h2>
+    <div class="statistics">
+        <div class="statistic-item">
+            <span>用時：</span>
+            <span id="timeSpent"></span>
+        </div>
+        <div class="statistic-item">
+            <span>平均每題用時：</span>
+            <span id="averageTime"></span>
+        </div>
+        <div class="statistic-item">
+            <span>正確數量：</span>
+            <span id="correctCount"></span>
+        </div>
+        <div class="statistic-item">
+            <span>錯誤數量：</span>
+            <span id="incorrectCount"></span>
+        </div>
+    </div>
+    <h3>錯誤的題目：</h3>
+    <ul id="errorList"></ul>
+    <h3>歷史統計:</h3>
+    <div class="statistics">
+        <div class="statistic-item">
+            <span>最好用時：</span>
+            <span id="bestTime">N/A</span>
+        </div>
+        <div class="statistic-item">
+            <span>最差用時：</span>
+            <span id="worstTime">N/A</span>
+        </div>
+    </div>
+    <button onclick="restartQuiz()">再試一次</button>
+    <button onclick="showHistoryErrors()">顯示歷史錯誤</button>
+</div>
+
+<div id="historyErrors" class="container">
+    <h2>歷史錯誤題目：</h2>
+    <ul id="historyErrorsList"></ul>
+    <div class="statistics">
+        <h3>統計資料：</h3>
+        <div class="statistic-item">
+            <span>總測驗次數：</span>
+            <span id="totalQuizzes"></span>
+        </div>
+        <div class="statistic-item">
+            <span>總題目數：</span>
+            <span id="totalQuestions"></span>
+        </div>
+        <div class="statistic-item">
+            <span>總錯誤數：</span>
+            <span id="totalErrors"></span>
+        </div>
+        <div class="statistic-item">
+            <span>平均正確率：</span>
+            <span id="averageAccuracy"></span>
+        </div>
+        <div class="statistic-item">
+            <span>平均用時：</span>
+            <span id="averageQuizTime"></span>
+        </div>
+        <div class="statistic-item">
+            <span>最好用時：</span>
+            <span id="bestQuizTime"></span>
+        </div>
+        <div class="statistic-item">
+            <span>最差用時：</span>
+            <span id="worstQuizTime"></span>
+        </div>
+        <div class="statistic-item">
+            <span>最高正確率：</span>
+            <span id="bestAccuracy"></span>
+        </div>
+        <div class="statistic-item">
+            <span>最低正確率：</span>
+            <span id="worstAccuracy"></span>
+        </div>
+        <div class="statistic-item">
+            <span>平均每題用時：</span>
+            <span id="averageQuestionTime"></span>
+        </div>
+        <div class="statistic-item">
+            <span>最快單題用時：</span>
+            <span id="fastestQuestionTime"></span>
+        </div>
+        <div class="statistic-item">
+            <span>最慢單題用時：</span>
+            <span id="slowestQuestionTime"></span>
+        </div>
+    </div>
+    <h3>測驗歷史記錄：</h3>
+    <ul id="quizHistoryList"></ul>
+    <button onclick="exportData()">匯出數據</button>
+    <button onclick="hideHistoryErrors()">返回</button>
+</div>
+
+<script>
+    let startTime, questions, userAnswers;
+    let currentQuestion = 0;
+    let historyTimes = [];
+    let historyErrors = [];
+    let quizHistory = [];
+    let totalQuestions = 0;
+    let totalQuizzes = 0;
+    let totalCorrect = 0;
+    let bestAccuracy = 0;
+    let worstAccuracy = 100;
+    let fastestQuestionTime = Infinity;
+    let slowestQuestionTime = 0;
+    let questionTimes = [];
+    let lastQuizSettings = {};
+
+    function toggleDarkMode() {
+        document.body.classList.toggle('dark-mode');
+    }
+
+    function startQuiz() {
+        const numAddends = parseInt(document.getElementById('numAddends').value);
+        const digitChoices = document.getElementById('digitChoices').value.split(',').map(x => parseInt(x.trim()));
+        const numQuestions = parseInt(document.getElementById('numQuestions').value);
+
+        lastQuizSettings = {
+            numAddends: numAddends,
+            digitChoices: digitChoices.join(','),
+            numQuestions: numQuestions
+        };
+
+        questions = generateQuestions(numQuestions, numAddends, digitChoices);
+        userAnswers = new Array(numQuestions).fill(null);
+        document.getElementById('setup').style.display = 'none';
+        document.getElementById('quiz').style.display = 'block';
+        document.getElementById('summary').style.display = 'none';
+        document.getElementById('historyErrors').style.display = 'none';
+        currentQuestion = 0;
+        displayCurrentQuestion();
+        startTime = new Date();
+        questionTimes = [];
+    }
+
+    function generateQuestions(numQuestions, numAddends, digitChoices) {
+        const questions = [];
+        for (let i = 0; i < numQuestions; i++) {
+            let numbers = [];
+            for (let j = 0; j < numAddends; j++) {
+                const digits = digitChoices[Math.floor(Math.random() * digitChoices.length)];
+                let num;
+                if (digits === 1) {
+                    num = Math.floor(Math.random() * 11); // 0 to 10
+                } else if (digits === 2) {
+                    num = Math.floor(Math.random() * 21); // 0 to 20
+                } else {
+                    num = Math.floor(Math.random() * Math.pow(10, digits));
+                }
+                numbers.push(num);
+            }
+            questions.push(numbers);
+        }
+        return questions;
+    }
+
+    function displayCurrentQuestion() {
+        const container = document.getElementById('questionContainer');
+        container.innerHTML = '';
+        const q = questions[currentQuestion];
+        const questionDiv = document.createElement('div');
+        questionDiv.className = 'question-div';
+
+        const inputField = document.createElement('input');
+        inputField.type = 'number';
+        inputField.id = `answer${currentQuestion}`;
+
+        const questionText = q.join(' + ');
+        questionDiv.innerHTML = `<div class="question">${questionText} = </div>`;
+        questionDiv.appendChild(inputField);
+        container.appendChild(questionDiv);
+
+        inputField.focus();
+        inputField.addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') {
+                nextQuestion();
+            }
+        });
+
+        const nextButton = document.getElementById('nextButton');
+        if (currentQuestion === questions.length - 1) {
+            nextButton.textContent = '提交答案';
+        } else {
+            nextButton.textContent = '下一題';
+        }
+
+        if (currentQuestion > 0) {
+            const questionTime = (new Date() - startTime) / 1000 - questionTimes.reduce((a, b) => a + b, 0);
+            questionTimes.push(questionTime);
+        }
+    }
+
+    function nextQuestion() {
+        const currentInput = document.getElementById(`answer${currentQuestion}`);
+        userAnswers[currentQuestion] = currentInput.value;
+
+        if (currentQuestion < questions.length - 1) {
+            currentQuestion++;
+            displayCurrentQuestion();
+        } else {
+            const lastQuestionTime = (new Date() - startTime) / 1000 - questionTimes.reduce((a, b) => a + b, 0);
+            questionTimes.push(lastQuestionTime);
+            submitAnswers();
+        }
+    }
+
+    function submitAnswers() {
+        const endTime = new Date();
+        const timeSpent = ((endTime - startTime) / 1000).toFixed(2);
+        const averageTime = (timeSpent / questions.length).toFixed(2);
+        let correctCount = 0;
+        let incorrectCount = 0;
+        const errorList = document.getElementById('errorList');
+        errorList.innerHTML = '';
+
+        let quizErrors = [];
+
+        questions.forEach((q, i) => {
+            const correctAnswer = q.reduce((a, b) => a + b, 0);
+            const userAnswer = parseInt(userAnswers[i]);
+            if (userAnswer === correctAnswer) {
+                correctCount++;
+            } else {
+                incorrectCount++;
+                const errorItem = `${q.join(' + ')} = ${userAnswer} (正確答案：${correctAnswer})`;
+                errorList.innerHTML += `<li>${errorItem}</li>`;
+                historyErrors.push(errorItem);
+                quizErrors.push(errorItem);
+            }
+        });
+
+        totalCorrect += correctCount;
+        historyTimes.push(parseFloat(timeSpent));
+        const bestTime = Math.min(...historyTimes).toFixed(2);
+        const worstTime = Math.max(...historyTimes).toFixed(2);
+
+        totalQuizzes++;
+        totalQuestions += questions.length;
+
+        const accuracy = (correctCount / questions.length) * 100;
+        bestAccuracy = Math.max(bestAccuracy, accuracy);
+        worstAccuracy = Math.min(worstAccuracy, accuracy);
+
+        fastestQuestionTime = Math.min(fastestQuestionTime, ...questionTimes);
+        slowestQuestionTime = Math.max(slowestQuestionTime, ...questionTimes);
+
+        quizHistory.push({
+            date: new Date().toLocaleString(),
+            timeSpent: timeSpent,
+            correctCount: correctCount,
+            incorrectCount: incorrectCount,
+            totalQuestions: questions.length,
+            accuracy: accuracy.toFixed(2),
+            averageTimePerQuestion: averageTime,
+            errors: quizErrors,
+            settings: lastQuizSettings
+        });
+
+        document.getElementById('quiz').style.display = 'none';
+        document.getElementById('summary').style.display = 'block';
+        document.getElementById('timeSpent').innerText = timeSpent + ' 秒';
+        document.getElementById('averageTime').innerText = averageTime + ' 秒';
+        document.getElementById('correctCount').innerText = correctCount;
+        document.getElementById('incorrectCount').innerText = incorrectCount;
+        document.getElementById('bestTime').innerText = bestTime + ' 秒';
+        document.getElementById('worstTime').innerText = worstTime + ' 秒';
+    }
+
+    function restartQuiz() {
+        document.getElementById('setup').style.display = 'block';
+        document.getElementById('quiz').style.display = 'none';
+        document.getElementById('summary').style.display = 'none';
+        document.getElementById('historyErrors').style.display = 'none';
+        currentQuestion = 0;
+    }
+
+    function showHistoryErrors() {
+        document.getElementById('setup').style.display = 'none';
+        document.getElementById('quiz').style.display = 'none';
+        document.getElementById('summary').style.display = 'none';
+        document.getElementById('historyErrors').style.display = 'block';
+
+        const historyErrorsList = document.getElementById('historyErrorsList');
+        historyErrorsList.innerHTML = '';
+        historyErrors.forEach(error => {
+            historyErrorsList.innerHTML += `<li>${error}</li>`;
+        });
+
+        document.getElementById('totalQuizzes').innerText = totalQuizzes;
+        document.getElementById('totalQuestions').innerText = totalQuestions;
+        document.getElementById('totalErrors').innerText = historyErrors.length;
+        const averageAccuracy = ((totalCorrect / totalQuestions) * 100).toFixed(2);
+        document.getElementById('averageAccuracy').innerText = averageAccuracy + '%';
+        const averageQuizTime = (historyTimes.reduce((a, b) => a + b, 0) / historyTimes.length).toFixed(2);
+        document.getElementById('averageQuizTime').innerText = averageQuizTime + ' 秒';
+        document.getElementById('bestQuizTime').innerText = Math.min(...historyTimes).toFixed(2) + ' 秒';
+        document.getElementById('worstQuizTime').innerText = Math.max(...historyTimes).toFixed(2) + ' 秒';
+        document.getElementById('bestAccuracy').innerText = bestAccuracy.toFixed(2) + '%';
+        document.getElementById('worstAccuracy').innerText = worstAccuracy.toFixed(2) + '%';
+        const averageQuestionTime = (historyTimes.reduce((a, b) => a + b, 0) / totalQuestions).toFixed(2);
+        document.getElementById('averageQuestionTime').innerText = averageQuestionTime + ' 秒';
+        document.getElementById('fastestQuestionTime').innerText = fastestQuestionTime.toFixed(2) + ' 秒';
+        document.getElementById('slowestQuestionTime').innerText = slowestQuestionTime.toFixed(2) + ' 秒';
+
+        const quizHistoryList = document.getElementById('quizHistoryList');
+        quizHistoryList.innerHTML = '';
+        quizHistory.forEach((quiz, index) => {
+            const quizItem = document.createElement('li');
+            quizItem.className = 'quiz-history-item';
+            quizItem.innerHTML = `
+                <strong>測驗 ${index + 1}</strong> (${quiz.date})<br>
+                <strong>設置：</strong>每題數字數：${quiz.settings.numAddends}，位數：${quiz.settings.digitChoices}，題目數量：${quiz.settings.numQuestions}<br>
+                <strong>結果：</strong>用時: ${quiz.timeSpent} 秒 | 
+                平均每題: ${quiz.averageTimePerQuestion} 秒 | 
+                正確: ${quiz.correctCount}/${quiz.totalQuestions} | 
+                正確率: ${quiz.accuracy}%
+                ${quiz.errors.length > 0 ? '<br>錯誤:' : ''}
+                <ul>
+                    ${quiz.errors.map(error => `<li>${error}</li>`).join('')}
+                </ul>
+            `;
+            quizHistoryList.appendChild(quizItem);
+        });
+    }
+
+    function exportData() {
+        let csvContent = "data:text/csv;charset=utf-8,\uFEFF";
+
+        // Include overall statistics in the export
+        csvContent += "統計資料\n";
+        csvContent += `總測驗次數,${totalQuizzes}\n`;
+        csvContent += `總題目數,${totalQuestions}\n`;
+        csvContent += `總錯誤數,${historyErrors.length}\n`;
+        csvContent += `平均正確率,${((totalCorrect / totalQuestions) * 100).toFixed(2)}%\n`;
+        csvContent += `平均用時,${(historyTimes.reduce((a, b) => a + b, 0) / historyTimes.length).toFixed(2)} 秒\n`;
+        csvContent += `最好用時,${Math.min(...historyTimes).toFixed(2)} 秒\n`;
+        csvContent += `最差用時,${Math.max(...historyTimes).toFixed(2)} 秒\n`;
+        csvContent += `最高正確率,${bestAccuracy.toFixed(2)}%\n`;
+        csvContent += `最低正確率,${worstAccuracy.toFixed(2)}%\n`;
+        csvContent += `平均每題用時,${(historyTimes.reduce((a, b) => a + b, 0) / totalQuestions).toFixed(2)} 秒\n`;
+        csvContent += `最快單題用時,${fastestQuestionTime.toFixed(2)} 秒\n`;
+        csvContent += `最慢單題用時,${slowestQuestionTime.toFixed(2)} 秒\n\n`;
+
+        // Include quiz history
+        csvContent += "測驗次數,日期,用時 (秒),平均每題用時 (秒),正確數量,錯誤數量,總題目數,正確率 (%),設置\n";
+        quizHistory.forEach((quiz, index) => {
+            csvContent += `${index + 1},${quiz.date},${quiz.timeSpent},${quiz.averageTimePerQuestion},${quiz.correctCount},${quiz.incorrectCount},${quiz.totalQuestions},${quiz.accuracy},` +
+                          `每題數字數: ${quiz.settings.numAddends},數字位數: ${quiz.settings.digitChoices},題目數量: ${quiz.settings.numQuestions}\n` +
+                          `錯誤:${quiz.errors.map(error => `\n${error}`).join('')}\n\n`;
+        });
+
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement('a');
+        link.setAttribute('href', encodedUri);
+        link.setAttribute('download', 'quiz_history.csv');
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+
+    function hideHistoryErrors() {
+        document.getElementById('setup').style.display = 'block';
+        document.getElementById('historyErrors').style.display = 'none';
+    }
+</script>
+
+</body>
+</html>
